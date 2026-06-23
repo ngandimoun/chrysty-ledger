@@ -1,65 +1,82 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
+
+import { NewWorkspaceDialog } from "@/components/workspace/new-workspace-dialog";
+import { useWorkspaces } from "@/contexts/workspace-context";
 
 export default function Home() {
+  const router = useRouter();
+  const { workspaces, isHydrated, createWorkspace } = useWorkspaces();
+  const [isNewWorkspaceOpen, setIsNewWorkspaceOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isHydrated || workspaces.length === 0) return;
+
+    const mostRecent = [...workspaces].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )[0];
+
+    router.replace(`/workspace/${mostRecent.id}`);
+  }, [isHydrated, workspaces, router]);
+
+  function handleCreateWorkspace(name: string) {
+    void createWorkspace(name).then((workspace) => {
+      router.push(`/workspace/${workspace.id}`);
+    });
+  }
+
+  if (!isHydrated) {
+    return (
+      <div className="flex min-h-full items-center justify-center px-4 py-8">
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  if (workspaces.length > 0) {
+    return (
+      <div className="flex min-h-full items-center justify-center px-4 py-8">
+        <p className="text-sm text-muted-foreground">Opening workspace...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <>
+      <div className="flex min-h-full items-center justify-center px-4 py-8 sm:px-6 sm:py-12">
+        <div className="w-full max-w-lg text-center">
+          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary/12 ring-1 ring-primary/20">
+            <span className="text-lg font-bold text-primary">C</span>
+          </div>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+            Welcome to{" "}
+            <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+              Chrysty
+            </span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+            Create your first workspace to start tracking expenses, receipts, and invoices
+            with AI.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={() => setIsNewWorkspaceOpen(true)}
+            className="mt-6 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/80"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <Plus className="size-4" />
+            Create your first workspace
+          </button>
         </div>
-      </main>
-    </div>
+      </div>
+
+      <NewWorkspaceDialog
+        open={isNewWorkspaceOpen}
+        onOpenChange={setIsNewWorkspaceOpen}
+        onCreate={handleCreateWorkspace}
+      />
+    </>
   );
 }

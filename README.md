@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Chrysty AI Ledger
 
-## Getting Started
+AI-powered small business accounting workspaces — track expenses, receipts, and invoices with chat, document extraction, and structured financial assets.
 
-First, run the development server:
+**Production:** https://ledger.chrysty.dev  
+**Worker slug:** `ledger`  
+**Platform API:** https://api.chrysty.dev
+
+## Stack
+
+- [Next.js 16](https://nextjs.org/) — App Router, React 19, TypeScript
+- [Supabase](https://supabase.com/) — shared chrysty project (workspaces, messages, assets, uploads)
+- [Moonshot Kimi](https://platform.kimi.ai/) — finance AI chat and document extraction
+- [Mastra](https://mastra.ai/) — multi-agent workflows (bulk import, expense analysis, reports)
+- [Trigger.dev](https://trigger.dev/) — background jobs
+- Gemini — speech-to-text in chat
+
+## Getting started
 
 ```bash
+cp .env.example .env.local   # Windows: copy .env.example .env.local
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+For background jobs in a second terminal:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run trigger:dev
+```
 
-## Learn More
+## Supabase
 
-To learn more about Next.js, take a look at the following resources:
+Apply migrations in `supabase/migrations/` to the shared **chrysty** Supabase project before first deploy. The `ledger-uploads` storage bucket is required.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy on Vercel (Pro)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Copy `.env.example` values to Vercel project environment variables.
+2. Set `NEXT_PUBLIC_APP_URL=https://ledger.chrysty.dev`.
+3. Use the Supabase **transaction pooler** for `DATABASE_URL` (port `6543`, append `?pgbouncer=true`).
+4. Long AI routes use `maxDuration = 300` on Vercel Pro. Keep `SERVERLESS_BUDGET_MS=280000` and the `MOONSHOT_*` timeout values within that budget.
+5. Deploy with `next build` (Vercel runs this automatically). Run `npm run typecheck` and `npm run test:smoke` locally first.
 
-## Deploy on Vercel
+Required env vars on Vercel:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_WORKER_SLUG=ledger`
+- `CHRYSTY_API_URL`, `NEXT_PUBLIC_CHRYSTY_API_URL`
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_UPLOADS_BUCKET=ledger-uploads`
+- `MOONSHOT_API_KEY` (+ Moonshot config from `.env.example`)
+- `DATABASE_URL` (Mastra agent workflows)
+- `GOOGLE_API_KEY` or `GEMINI_API_KEY` (speech-to-text)
+- `TRIGGER_SECRET_KEY`, `TRIGGER_PROJECT_REF`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Scripts
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start development server |
+| `npm run build` | Production build |
+| `npm run typecheck` | TypeScript check |
+| `npm run test:smoke` | Smoke tests |
+| `npm run trigger:dev` | Trigger.dev local worker |
