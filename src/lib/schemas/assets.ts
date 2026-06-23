@@ -10,6 +10,7 @@ const AssetCategorySchema = z.enum([
   "invoice",
   "export",
   "chart",
+  "files",
 ]);
 
 export const WorkspaceAssetSchema = z.object({

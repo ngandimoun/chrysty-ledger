@@ -29,7 +29,9 @@ export function getLastAssistantText(history: ChatMessage[]): string | null {
   return null;
 }
 
-export function getLastUserMessageWithFiles(history: ChatMessage[]): ChatMessage | null {
+export function getLastUserMessageWithFiles(
+  history: ChatMessage[]
+): Extract<ChatMessage, { role: "user"; type: "text" }> | null {
   for (let index = history.length - 1; index >= 0; index -= 1) {
     const message = history[index];
     if (

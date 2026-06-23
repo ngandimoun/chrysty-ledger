@@ -270,7 +270,7 @@ export function mergeChatUploadsIntoAssets(
     merged
       .filter(
         (asset) =>
-          (asset.kind === "file-list" || asset.kind === "file") &&
+          asset.kind === "file-list" &&
           asset.sourceMessageId
       )
       .map((asset) => chatUploadKey(asset.sourceMessageId!, { name: asset.title, size: 0, type: "" }))

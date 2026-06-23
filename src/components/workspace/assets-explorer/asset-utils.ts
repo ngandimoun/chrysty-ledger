@@ -144,7 +144,7 @@ export function formatAssetDisplayTitle(
   asset: WorkspaceAsset,
   disambiguation?: string
 ): string {
-  const isUpload = asset.kind === "file-list" || asset.kind === "file";
+  const isUpload = asset.kind === "file-list";
   const baseTitle = isUpload ? truncateFilename(asset.title) : asset.title;
   if (!disambiguation) return baseTitle;
   return `${baseTitle} · ${disambiguation}`;
