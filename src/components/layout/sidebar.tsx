@@ -8,6 +8,10 @@ import { AssetsExplorerPanel } from "@/components/workspace/assets-explorer/asse
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceSidebar } from "@/contexts/workspace-sidebar-context";
+import {
+  getUserFirstName,
+  useUserProfileQuery,
+} from "@/hooks/queries/use-user-profile-query";
 import { cn } from "@/lib/utils";
 import type { Workspace } from "@/lib/workspaces";
 
@@ -41,6 +45,8 @@ function SidebarContent({
   onSelectWorkspace,
 }: SidebarContentProps) {
   const { explorerState } = useWorkspaceSidebar();
+  const { data: userProfile } = useUserProfileQuery();
+  const firstName = userProfile ? getUserFirstName(userProfile) : null;
 
   const showAssets =
     explorerState !== null &&
@@ -50,9 +56,23 @@ function SidebarContent({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex h-14 shrink-0 items-center justify-between border-b border-sidebar-border px-3 sm:px-4">
-        <span className="truncate bg-gradient-to-r from-primary to-secondary bg-clip-text text-sm font-semibold text-transparent">
-          Chrysty
-        </span>
+        <div className="flex min-w-0 items-center gap-2.5">
+          {userProfile?.avatarUrl ? (
+            <img
+              src={userProfile.avatarUrl}
+              alt=""
+              className="size-7 shrink-0 rounded-full object-cover ring-1 ring-sidebar-border"
+            />
+          ) : (
+            <div
+              aria-hidden
+              className="size-7 shrink-0 rounded-full bg-sidebar-accent ring-1 ring-sidebar-border"
+            />
+          )}
+          <span className="truncate text-sm font-semibold text-sidebar-foreground">
+            {firstName ?? "…"}
+          </span>
+        </div>
         <Button
           variant="ghost"
           size="icon"
@@ -129,7 +149,9 @@ function SidebarContent({
         )}
       >
         <div className="flex min-h-11 items-center justify-between gap-2 px-3 py-2">
-          <span className="text-xs text-sidebar-foreground/60">Made in Chrysty</span>
+          <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-xs font-medium text-transparent">
+            Made in Chrysty
+          </span>
           <ThemeToggle className="text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" />
         </div>
       </div>
