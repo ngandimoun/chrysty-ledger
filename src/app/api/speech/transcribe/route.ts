@@ -1,6 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 import { isGeminiSttConfigured, transcribeAudio } from "@/lib/ai/gemini-stt";
+import {
+  PlatformAccessError,
+  requirePlatformAccess,
+} from "@/lib/chrysty/guard";
 import { assertCoreProductionEnv, assertSpeechProductionEnv, productionEnvErrorResponse } from "@/lib/env";
 import { parseLedgerIdentityFromHeaders } from "@/lib/ledger/server-scope";
 
@@ -9,7 +13,16 @@ export const maxDuration = 60;
 
 const MAX_AUDIO_BYTES = 20 * 1024 * 1024;
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  try {
+    await requirePlatformAccess(request);
+  } catch (error) {
+    if (error instanceof PlatformAccessError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    throw error;
+  }
+
   try {
     assertCoreProductionEnv();
     assertSpeechProductionEnv();

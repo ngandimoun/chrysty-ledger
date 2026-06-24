@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 import { persistChatUploads } from "@/lib/assets/persist-chat-uploads";
 import { buildAssistantRepliesFromLedgerChat, runLedgerChat } from "@/lib/ai/ledger-chat";
@@ -20,6 +20,11 @@ import { createSseDonePayload, createSsePayload } from "@/lib/ai/streaming";
 import type { AttachmentInput, ChatSseEvent } from "@/lib/ai/types";
 import type { ChatMessage } from "@/lib/chat-types";
 import { assertCoreProductionEnv, productionEnvErrorResponse } from "@/lib/env";
+import {
+  PlatformAccessError,
+  requirePlatformAccess,
+} from "@/lib/chrysty/guard";
+import { trackAgentUsage } from "@/lib/chrysty/track-usage";
 import { parseLedgerIdentityFromHeaders } from "@/lib/ledger/server-scope";
 import {
   createServerlessBudget,
@@ -61,7 +66,16 @@ async function fileToAttachment(file: File): Promise<AttachmentInput> {
   };
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  try {
+    await requirePlatformAccess(request);
+  } catch (error) {
+    if (error instanceof PlatformAccessError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    throw error;
+  }
+
   try {
     assertCoreProductionEnv();
   } catch (error) {
@@ -277,6 +291,14 @@ export async function POST(request: Request) {
 
           const replies = buildAssistantRepliesFromLedgerChat(result);
           push({ type: "replies", replies });
+          try {
+            await trackAgentUsage({
+              inputTokens: Math.ceil((content || "").length / 4),
+              outputTokens: Math.ceil((result.text || "").length / 4),
+            });
+          } catch (usageError) {
+            console.error("[chat] trackAgentUsage failed:", usageError);
+          }
           controller.enqueue(encoder.encode(createSseDonePayload()));
           controller.close();
         } catch (error) {

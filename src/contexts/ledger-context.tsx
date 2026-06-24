@@ -8,16 +8,13 @@ import {
   useState,
 } from "react";
 
-import type { SupabaseClient } from "@supabase/supabase-js";
-
 import { getOrCreateLedgerKey } from "@/lib/ledger/identity";
 import { claimLedgerWorkspaces } from "@/lib/ledger/workspaces";
 import type { LedgerScope } from "@/lib/ledger/scope";
 import { getBrowserClient } from "@/lib/supabase/client";
-import type { Database } from "@/lib/supabase/database.types";
 
 type LedgerContextValue = {
-  supabase: SupabaseClient<Database>;
+  supabase: ReturnType<typeof getBrowserClient>;
   ledgerKey: string;
   userId: string | null;
   scope: LedgerScope | null;

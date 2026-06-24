@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { updateSession } from "@/lib/supabase/middleware";
+
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_REQUESTS = 10;
 
@@ -47,7 +49,7 @@ function checkRateLimit(key: string): boolean {
   return false;
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (request.method === "POST" && isRateLimitedPath(pathname)) {
@@ -60,9 +62,11 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return updateSession(request);
 }
 
 export const config = {
-  matcher: ["/api/chat", "/api/speech/:path*", "/api/workspace/:id/agent/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

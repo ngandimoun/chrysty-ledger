@@ -1,9 +1,13 @@
 import "server-only";
 
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { createWorkflowStateReader } from "@mastra/core/workflows";
 
 import { isMastraAgentLayerEnabled } from "@/lib/agent/mastra-enabled";
+import {
+  PlatformAccessError,
+  requirePlatformAccess,
+} from "@/lib/chrysty/guard";
 import {
   createLedgerScope,
   parseLedgerIdentityFromBody,
@@ -15,7 +19,18 @@ export const runtime = "nodejs";
 
 type WorkflowKey = "bulkImport" | "expenseAnalysis" | "scheduledReport";
 
-export async function resolveAgentRunContext(request: Request, workspaceId: string) {
+export async function resolveAgentRunContext(request: NextRequest, workspaceId: string) {
+  try {
+    await requirePlatformAccess(request);
+  } catch (error) {
+    if (error instanceof PlatformAccessError) {
+      return {
+        error: NextResponse.json({ error: error.message }, { status: error.status }),
+      };
+    }
+    throw error;
+  }
+
   const identity =
     parseLedgerIdentityFromHeaders(request) ?? (await parseLedgerIdentityFromBody(request));
   if (!identity) {

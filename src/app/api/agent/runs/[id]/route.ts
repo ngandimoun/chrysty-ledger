@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 import { getWorkflowRunState, resolveAgentRunContext } from "@/lib/agent/agent-route-helpers";
 import { assertCoreProductionEnv, assertMastraProductionEnv, productionEnvErrorResponse } from "@/lib/env";
@@ -6,7 +6,7 @@ import { assertCoreProductionEnv, assertMastraProductionEnv, productionEnvErrorR
 export const runtime = "nodejs";
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {

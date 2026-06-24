@@ -1,0 +1,14 @@
+{
+  "name": "Chrysty AI Ledger",
+  "slug": "ledger",
+  "url": "ledger.chrysty.dev",
+  "category": "Business",
+  "tags": [
+    "bookkeeping",
+    "expenses",
+    "invoices",
+    "receipts",
+    "accounting"
+  ],
+  "description": "Track expenses, receipts, and invoices with an AI bookkeeping workspace."
+}

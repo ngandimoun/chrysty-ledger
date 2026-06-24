@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { PanelLeft } from "lucide-react";
 
+import { AuthGuard } from "@/components/auth/auth-guard";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/layout/sidebar";
 import { NewWorkspaceDialog } from "@/components/workspace/new-workspace-dialog";
@@ -68,8 +69,13 @@ export function AppShell({ children }: AppShellProps) {
     setIsSidebarOpen(false);
   }
 
+  if (pathname?.startsWith("/auth/")) {
+    return <>{children}</>;
+  }
+
   return (
-    <div className="flex h-dvh overflow-hidden bg-background">
+    <AuthGuard>
+      <div className="flex h-dvh overflow-hidden bg-background">
       <Sidebar
         isOpen={isSidebarOpen}
         isMobile={isMobile}
@@ -104,5 +110,6 @@ export function AppShell({ children }: AppShellProps) {
         </main>
       </div>
     </div>
+    </AuthGuard>
   );
 }
