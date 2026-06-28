@@ -13,6 +13,7 @@ import type { GroupedAssets, WorkspaceAsset } from "@/lib/asset-types";
 import { upsertAsset as upsertLedgerAsset } from "@/lib/ledger/assets";
 import { insertAssetEvent, nextAssetSequence, nextCreationSequence } from "@/lib/ledger/events";
 import { migrateMessagesToAssets } from "@/lib/migrate-message-assets";
+import { scopeCacheKey } from "@/lib/ledger/scope";
 import type { ChatMessage } from "@/lib/chat-types";
 import { createMessageId } from "@/lib/chat-types";
 import { queryKeys } from "@/lib/query-keys";
@@ -33,6 +34,9 @@ const EMPTY_ASSETS: WorkspaceAsset[] = [];
 export function useWorkspaceAssets(workspaceId: string, messages: ChatMessage[] = []) {
   const scope = useOptionalLedgerScope();
   const queryClient = useQueryClient();
+  const scopeKey = scope ? scopeCacheKey(scope) : null;
+  const assetsQueryKey =
+    scopeKey != null ? queryKeys.assets(workspaceId, scopeKey) : null;
   const [searchQuery, setSearchQuery] = useState("");
   const migratedRef = useRef(false);
 
@@ -62,7 +66,8 @@ export function useWorkspaceAssets(workspaceId: string, messages: ChatMessage[] 
     );
 
     if (needsPersist || next.length !== rows.length) {
-      queryClient.setQueryData(queryKeys.assets(workspaceId), next);
+      if (!assetsQueryKey) return;
+      queryClient.setQueryData(assetsQueryKey, next);
 
       void (async () => {
         for (const asset of next) {
@@ -72,7 +77,7 @@ export function useWorkspaceAssets(workspaceId: string, messages: ChatMessage[] 
         }
       })();
     }
-  }, [scope, assetsQuery.isSuccess, assetsQuery.data, workspaceId, messages, queryClient]);
+  }, [scope, assetsQuery.isSuccess, assetsQuery.data, workspaceId, messages, queryClient, assetsQueryKey]);
 
   const assets = assetsQuery.data ?? EMPTY_ASSETS;
   const isHydrated = assetsQuery.isFetched;
@@ -119,8 +124,10 @@ export function useWorkspaceAssets(workspaceId: string, messages: ChatMessage[] 
       occurredAt?: string;
     }) => {
       if (!scope) throw new Error("Ledger is not ready");
+      if (!assetsQueryKey) throw new Error("Assets query is not ready");
 
-      const current = queryClient.getQueryData<WorkspaceAsset[]>(queryKeys.assets(workspaceId)) ?? [];
+      const current =
+        queryClient.getQueryData<WorkspaceAsset[]>(assetsQueryKey) ?? [];
       const timestamp =
         input.occurredAt ?? resolveOccurredAt(messages, input.sourceMessageId);
 
@@ -138,7 +145,7 @@ export function useWorkspaceAssets(workspaceId: string, messages: ChatMessage[] 
         creationSequence,
       });
 
-      queryClient.setQueryData(queryKeys.assets(workspaceId), result.assets);
+      queryClient.setQueryData(assetsQueryKey, result.assets);
 
       await persistAssetChange(result.asset, {
         type: result.isCreate ? "asset_created" : "asset_updated",
@@ -151,7 +158,9 @@ export function useWorkspaceAssets(workspaceId: string, messages: ChatMessage[] 
     },
     onError: (err) => {
       toast.error(err instanceof Error ? err.message : "Failed to save asset");
-      void queryClient.invalidateQueries({ queryKey: queryKeys.assets(workspaceId) });
+      if (assetsQueryKey) {
+        void queryClient.invalidateQueries({ queryKey: assetsQueryKey });
+      }
     },
   });
 
@@ -169,7 +178,7 @@ export function useWorkspaceAssets(workspaceId: string, messages: ChatMessage[] 
     async (asset: Asset, sourceMessageId?: string, occurredAt?: string) => {
       const workspaceAsset = assetV2ToWorkspaceAsset(asset);
 
-      queryClient.setQueryData<WorkspaceAsset[]>(queryKeys.assets(workspaceId), (current) => {
+      queryClient.setQueryData<WorkspaceAsset[]>(assetsQueryKey!, (current) => {
         const list = current ?? [];
         const index = list.findIndex((item) => item.id === workspaceAsset.id);
         if (index >= 0) {
@@ -188,7 +197,7 @@ export function useWorkspaceAssets(workspaceId: string, messages: ChatMessage[] 
 
       return workspaceAsset;
     },
-    [registerMutation, queryClient, workspaceId]
+    [registerMutation, queryClient, workspaceId, assetsQueryKey]
   );
 
   const registerAssetsV2 = useCallback(
@@ -242,7 +251,7 @@ export function useWorkspaceAssets(workspaceId: string, messages: ChatMessage[] 
 
   const ensureAssetInCache = useCallback(
     (asset: WorkspaceAsset) => {
-      queryClient.setQueryData<WorkspaceAsset[]>(queryKeys.assets(workspaceId), (current) => {
+      queryClient.setQueryData<WorkspaceAsset[]>(assetsQueryKey!, (current) => {
         const list = current ?? [];
         const index = list.findIndex((item) => item.id === asset.id);
         if (index >= 0) {
@@ -253,7 +262,7 @@ export function useWorkspaceAssets(workspaceId: string, messages: ChatMessage[] 
         return [asset, ...list];
       });
     },
-    [queryClient, workspaceId]
+    [queryClient, workspaceId, assetsQueryKey]
   );
 
   const syncAssetV2ToCache = useCallback(
@@ -270,6 +279,7 @@ export function useWorkspaceAssets(workspaceId: string, messages: ChatMessage[] 
     searchQuery,
     setSearchQuery,
     isHydrated: isHydrated || assetsQuery.isError,
+    isAssetsLoading: assetsQuery.isLoading,
     registerArtifact,
     registerArtifacts,
     registerAssetV2,

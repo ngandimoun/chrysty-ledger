@@ -28,7 +28,7 @@ type WorkspaceContextValue = {
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
-  const { scope, isReady: isLedgerReady } = useLedger();
+  const { scope, isReady: isLedgerReady, authSettled } = useLedger();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,7 +54,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   }, [scope]);
 
   useEffect(() => {
-    if (!isLedgerReady || !scope) return;
+    if (!isLedgerReady || !authSettled || !scope) return;
     const activeScope = scope;
 
     let cancelled = false;
@@ -80,7 +80,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [isLedgerReady, scope, refreshWorkspaces]);
+  }, [isLedgerReady, authSettled, scope, refreshWorkspaces]);
 
   const createWorkspace = useCallback(
     async (name: string) => {

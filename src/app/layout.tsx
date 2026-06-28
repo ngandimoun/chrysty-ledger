@@ -24,6 +24,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Chrysty AI Ledger",
   description: "Small business accounting, powered by AI",
+  other: {
+    google: "notranslate",
+  },
 };
 
 export const viewport: Viewport = {
@@ -40,10 +43,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      translate="no"
+      className={`notranslate ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-dvh overflow-x-hidden antialiased">
+      <body className="notranslate min-h-dvh overflow-x-hidden antialiased" translate="no">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -51,8 +55,8 @@ export default function RootLayout({
           storageKey="chrysty-theme"
           disableTransitionOnChange
         >
-          <LedgerProvider>
-            <QueryProvider>
+          <QueryProvider>
+            <LedgerProvider>
               <WorkspaceProvider>
                 <WorkspaceSidebarProvider>
                   <ChatAssetRefsProvider>
@@ -60,8 +64,8 @@ export default function RootLayout({
                   </ChatAssetRefsProvider>
                 </WorkspaceSidebarProvider>
               </WorkspaceProvider>
-            </QueryProvider>
-          </LedgerProvider>
+            </LedgerProvider>
+          </QueryProvider>
           <Toaster richColors position="top-center" />
         </ThemeProvider>
       </body>

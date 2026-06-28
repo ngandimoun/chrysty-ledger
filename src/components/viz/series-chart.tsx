@@ -73,7 +73,7 @@ export function SeriesChart({
 
   if (chartType === "line") {
     return (
-      <div className={cn("w-full", className)}>
+      <div className={cn("notranslate w-full", className)} translate="no">
         <ResponsiveContainer width="100%" height={height}>
           <LineChart data={data}>
             <XAxis dataKey="label" {...axisProps} />
@@ -98,7 +98,7 @@ export function SeriesChart({
       chartType === "donut" ? chartDonutRadii(compact) : { innerRadius: 0, outerRadius: compact ? 70 : 100 };
 
     return (
-      <div className={cn("w-full", className)}>
+      <div className={cn("notranslate w-full", className)} translate="no">
         <ResponsiveContainer width="100%" height={height}>
           <PieChart>
             <Pie
@@ -124,7 +124,7 @@ export function SeriesChart({
   }
 
   return (
-    <div className={cn("w-full", className)}>
+    <div className={cn("notranslate w-full", className)} translate="no">
       <ResponsiveContainer width="100%" height={height}>
         <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 32 }}>
           <XAxis

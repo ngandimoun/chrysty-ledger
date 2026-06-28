@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import {
   createContext,
   useContext,
@@ -19,14 +20,23 @@ type LedgerContextValue = {
   userId: string | null;
   scope: LedgerScope | null;
   isReady: boolean;
+  authSettled: boolean;
 };
 
 const LedgerContext = createContext<LedgerContextValue | null>(null);
 
+function invalidateScopedQueries(queryClient: ReturnType<typeof useQueryClient>) {
+  void queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+  void queryClient.invalidateQueries({ queryKey: ["assets"] });
+  void queryClient.invalidateQueries({ queryKey: ["messages"] });
+}
+
 export function LedgerProvider({ children }: { children: React.ReactNode }) {
+  const queryClient = useQueryClient();
   const [ledgerKey, setLedgerKey] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [authSettled, setAuthSettled] = useState(false);
   const supabase = useMemo(() => getBrowserClient(), []);
 
   useEffect(() => {
@@ -35,35 +45,53 @@ export function LedgerProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!isReady) return;
+    if (!isReady || !ledgerKey) return;
 
     let cancelled = false;
 
-    void supabase.auth.getSession().then(({ data }) => {
-      if (!cancelled) {
-        setUserId(data.session?.user.id ?? null);
+    async function bootstrapSession() {
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
+
+      const sessionUserId = data.session?.user.id ?? null;
+
+      if (sessionUserId) {
+        await claimLedgerWorkspaces(
+          { supabase, ledgerKey, userId: sessionUserId },
+          sessionUserId
+        );
       }
-    });
+
+      if (cancelled) return;
+
+      setUserId(sessionUserId);
+      setAuthSettled(true);
+    }
+
+    void bootstrapSession();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       const nextUserId = session?.user.id ?? null;
-      setUserId(nextUserId);
 
-      if (_event === "SIGNED_IN" && nextUserId && ledgerKey) {
-        void claimLedgerWorkspaces(
+      if (event === "SIGNED_IN" && nextUserId && ledgerKey) {
+        await claimLedgerWorkspaces(
           { supabase, ledgerKey, userId: nextUserId },
           nextUserId
         );
       }
+
+      setUserId(nextUserId);
+      setAuthSettled(true);
+      invalidateScopedQueries(queryClient);
     });
 
     return () => {
       cancelled = true;
       subscription.unsubscribe();
     };
-  }, [isReady, ledgerKey, supabase]);
+  }, [isReady, ledgerKey, supabase, queryClient]);
 
   const scope = useMemo<LedgerScope | null>(() => {
     if (!isReady || !ledgerKey) return null;
@@ -77,8 +105,9 @@ export function LedgerProvider({ children }: { children: React.ReactNode }) {
       userId,
       scope,
       isReady,
+      authSettled,
     }),
-    [supabase, ledgerKey, userId, scope, isReady]
+    [supabase, ledgerKey, userId, scope, isReady, authSettled]
   );
 
   return (
@@ -95,15 +124,15 @@ export function useLedger() {
 }
 
 export function useLedgerScope(): LedgerScope {
-  const { scope, isReady } = useLedger();
-  if (!isReady || !scope) {
+  const { scope, isReady, authSettled } = useLedger();
+  if (!isReady || !authSettled || !scope) {
     throw new Error("Ledger scope is not ready");
   }
   return scope;
 }
 
 export function useOptionalLedgerScope(): LedgerScope | null {
-  const { scope, isReady } = useLedger();
-  if (!isReady) return null;
+  const { scope, isReady, authSettled } = useLedger();
+  if (!isReady || !authSettled) return null;
   return scope;
 }

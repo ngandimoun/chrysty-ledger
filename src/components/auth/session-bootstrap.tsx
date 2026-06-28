@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
+import { getBrowserClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 
 function readAuthTokens() {
@@ -28,7 +28,7 @@ export function useSessionBootstrap() {
       const { accessToken, refreshToken } = readAuthTokens();
 
       if (accessToken && refreshToken) {
-        const supabase = createClient();
+        const supabase = getBrowserClient();
         const { error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,

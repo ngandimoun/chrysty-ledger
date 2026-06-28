@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
+import { useLedger } from "@/contexts/ledger-context";
 import { queryKeys } from "@/lib/query-keys";
 
 type UserProfile = {
@@ -30,8 +31,12 @@ export function getUserFirstName(profile: Pick<UserProfile, "fullName" | "email"
 }
 
 export function useUserProfileQuery() {
+  const { userId, authSettled } = useLedger();
+  const profileKey = userId ?? "anon";
+
   return useQuery({
-    queryKey: queryKeys.userProfile(),
+    queryKey: queryKeys.userProfile(profileKey),
     queryFn: fetchUserProfile,
+    enabled: authSettled,
   });
 }

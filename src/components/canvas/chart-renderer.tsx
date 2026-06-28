@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
+import { useChartReady } from "@/hooks/use-chart-ready";
 import { SeriesChart } from "@/components/viz/series-chart";
 import type { Asset } from "@/lib/assets/asset";
 import { resolveVizSpec } from "@/lib/viz/viz-engine";
@@ -14,7 +13,6 @@ type ChartRendererProps = {
 };
 
 export function ChartRenderer({ asset, compact = false, className }: ChartRendererProps) {
-  const [isReady, setIsReady] = useState(false);
   const series = (asset.data.series as { label: string; value: number }[]) ?? [];
   const spec = resolveVizSpec({
     intent: String(asset.schema.intent ?? "compare_categories"),
@@ -22,14 +20,7 @@ export function ChartRenderer({ asset, compact = false, className }: ChartRender
     subtype: asset.subtype,
     series,
   });
-
-  useEffect(() => {
-    setIsReady(false);
-    const frame = requestAnimationFrame(() => {
-      setIsReady(true);
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [asset.id, spec.chartType, spec.data.length]);
+  const isReady = useChartReady([asset.id, spec.chartType, spec.data.length]);
 
   if (spec.empty) {
     return (

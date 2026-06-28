@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { getLoginRedirectUrl } from "@/lib/chrysty/constants";
-import { createClient } from "@/lib/supabase/client";
+import { getBrowserClient } from "@/lib/supabase/client";
 
 export default function SettingsPage() {
   const [email, setEmail] = useState<string | null>(null);
@@ -38,7 +38,7 @@ export default function SettingsPage() {
   }, []);
 
   async function handleSignOut() {
-    const supabase = createClient();
+    const supabase = getBrowserClient();
     await supabase.auth.signOut();
     window.location.href = getLoginRedirectUrl(window.location.origin);
   }

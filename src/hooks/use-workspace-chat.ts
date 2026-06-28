@@ -25,6 +25,7 @@ import { formatAttachmentProcessingStatus } from "@/lib/chat-attachment-status";
 import type { Asset } from "@/lib/assets/asset";
 import type { ChatSseEvent } from "@/lib/ai/types";
 import { KIMI_BUILTIN_WEB_SEARCH_NAME } from "@/lib/ai/official-tools";
+import { scopeCacheKey } from "@/lib/ledger/scope";
 import { queryKeys } from "@/lib/query-keys";
 
 export type ChatTurnReplyContext = {
@@ -159,6 +160,11 @@ export function useWorkspaceChat(workspaceId: string, options: UseWorkspaceChatO
   const { getOpenAssetId, onReplies, onAssetEvent, onMessageSent } = options;
   const scope = useOptionalLedgerScope();
   const queryClient = useQueryClient();
+  const scopeKey = scope ? scopeCacheKey(scope) : null;
+  const messagesQueryKey =
+    scopeKey != null ? queryKeys.messages(workspaceId, scopeKey) : null;
+  const assetsQueryKey =
+    scopeKey != null ? queryKeys.assets(workspaceId, scopeKey) : null;
   const messagesQuery = useWorkspaceMessagesQuery(workspaceId);
   const [isResponding, setIsResponding] = useState(false);
   const [pendingAssistant, setPendingAssistant] = useState<PendingAssistantState | null>(null);
@@ -227,7 +233,7 @@ export function useWorkspaceChat(workspaceId: string, options: UseWorkspaceChatO
         createdAt: new Date().toISOString(),
       };
 
-      queryClient.setQueryData<ChatMessage[]>(queryKeys.messages(workspaceId), (current) => [
+      queryClient.setQueryData<ChatMessage[]>(messagesQueryKey!, (current) => [
         ...(current ?? []),
         userMessage,
       ]);
@@ -247,7 +253,7 @@ export function useWorkspaceChat(workspaceId: string, options: UseWorkspaceChatO
       });
 
       const historyForApi = slimMessagesForApi(
-        queryClient.getQueryData<ChatMessage[]>(queryKeys.messages(workspaceId)) ??
+        queryClient.getQueryData<ChatMessage[]>(messagesQueryKey!) ??
           [...input.history, userMessage]
       );
 
@@ -322,7 +328,7 @@ export function useWorkspaceChat(workspaceId: string, options: UseWorkspaceChatO
         }));
         const patchedMessage: ChatMessage = { ...userMessage, files: patchedFiles };
 
-        queryClient.setQueryData<ChatMessage[]>(queryKeys.messages(workspaceId), (current) =>
+        queryClient.setQueryData<ChatMessage[]>(messagesQueryKey!, (current) =>
           (current ?? []).map((message) =>
             message.id === patchedMessage.id ? patchedMessage : message
           )
@@ -333,7 +339,7 @@ export function useWorkspaceChat(workspaceId: string, options: UseWorkspaceChatO
         });
       }
 
-      queryClient.setQueryData<ChatMessage[]>(queryKeys.messages(workspaceId), (current) => [
+      queryClient.setQueryData<ChatMessage[]>(messagesQueryKey!, (current) => [
         ...(current ?? []),
         ...replies,
       ]);
@@ -342,7 +348,9 @@ export function useWorkspaceChat(workspaceId: string, options: UseWorkspaceChatO
         await persistMessage(reply);
       }
 
-      void queryClient.invalidateQueries({ queryKey: queryKeys.assets(workspaceId) });
+      if (assetsQueryKey) {
+        void queryClient.invalidateQueries({ queryKey: assetsQueryKey });
+      }
 
       return {
         replies,
@@ -367,7 +375,7 @@ export function useWorkspaceChat(workspaceId: string, options: UseWorkspaceChatO
       }
 
       const errorReply = createAssistantErrorMessage(err);
-      queryClient.setQueryData<ChatMessage[]>(queryKeys.messages(workspaceId), (current) => [
+      queryClient.setQueryData<ChatMessage[]>(messagesQueryKey!, (current) => [
         ...(current ?? []),
         errorReply,
       ]);

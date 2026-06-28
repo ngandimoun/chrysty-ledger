@@ -98,6 +98,7 @@ export function WorkspaceShell({ workspaceId, workspaceName }: WorkspaceShellPro
     groupedAssets,
     searchQuery,
     setSearchQuery,
+    isAssetsLoading,
     registerArtifacts,
     registerAssetsV2,
     syncAssetV2ToCache,
@@ -231,6 +232,53 @@ export function WorkspaceShell({ workspaceId, workspaceName }: WorkspaceShellPro
 
   const isCanvasOpen = Boolean(openAssetId);
 
+  const renderCanvasPanel = (className?: string) => {
+    if (!isCanvasOpen) {
+      return (
+        <WorkspaceOverview
+          workspaceName={workspaceName}
+          assets={assets}
+          onSuggestionClick={handleChipClick}
+          onOpenAsset={handleSelectAsset}
+          className={className ?? "flex-1"}
+        />
+      );
+    }
+
+    if (canvasAsset) {
+      return (
+        <AssetCanvas asset={canvasAsset} onClose={handleCloseAsset} className={className ?? "flex-1"} />
+      );
+    }
+
+    if (isAssetsLoading) {
+      return (
+        <div
+          className={cn(
+            "flex flex-1 items-center justify-center text-sm text-muted-foreground",
+            className
+          )}
+        >
+          Loading asset…
+        </div>
+      );
+    }
+
+    return (
+      <div
+        className={cn(
+          "flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center text-sm text-muted-foreground",
+          className
+        )}
+      >
+        <p>This asset could not be loaded.</p>
+        <Button variant="outline" size="sm" onClick={handleCloseAsset}>
+          Close panel
+        </Button>
+      </div>
+    );
+  };
+
   useEffect(() => {
     return () => {
       clearExplorerState();
@@ -240,8 +288,8 @@ export function WorkspaceShell({ workspaceId, workspaceName }: WorkspaceShellPro
   if (isMobile) {
     return (
       <div className="flex h-full min-h-0 flex-col">
-        {isCanvasOpen && canvasAsset ? (
-          <AssetCanvas asset={canvasAsset} onClose={handleCloseAsset} className="flex-1" />
+        {isCanvasOpen ? (
+          renderCanvasPanel("flex-1")
         ) : (
           <div className="flex min-h-0 flex-1 flex-col">
             {!isCanvasOpen && messages.length === 0 ? (
@@ -355,8 +403,8 @@ export function WorkspaceShell({ workspaceId, workspaceName }: WorkspaceShellPro
       </div>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        {isCanvasOpen && canvasAsset ? (
-          <AssetCanvas asset={canvasAsset} onClose={handleCloseAsset} className="flex-1" />
+        {isCanvasOpen ? (
+          renderCanvasPanel("flex-1")
         ) : (
           <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-4">
             <WorkspaceOverview

@@ -31,3 +31,8 @@ export function workspaceScopeFilter(scope: LedgerScope): string {
   }
   return `ledger_key.eq.${scope.ledgerKey}`;
 }
+
+/** Stable React Query cache segment for the current auth scope. */
+export function scopeCacheKey(scope: LedgerScope): string {
+  return scope.userId ?? scope.ledgerKey;
+}

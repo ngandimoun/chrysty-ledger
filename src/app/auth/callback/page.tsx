@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
+import { getBrowserClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -42,7 +42,7 @@ export default function AuthCallbackPage() {
             throw new Error(payload?.error ?? "Failed to exchange auth code");
           }
         } else if (accessToken && refreshToken) {
-          const supabase = createClient();
+          const supabase = getBrowserClient();
           const { error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
