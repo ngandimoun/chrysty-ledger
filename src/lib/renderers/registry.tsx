@@ -33,7 +33,10 @@ export function getRenderer(kind: string): AssetRenderer {
 export function RenderAsset({ asset, className }: AssetRendererProps) {
   const Renderer = getRenderer(asset.kind);
   return (
-    <RendererErrorBoundary title={`Couldn't display "${asset.title}"`}>
+    <RendererErrorBoundary
+      resetKey={asset.id}
+      title={`Couldn't display "${asset.title}"`}
+    >
       <Renderer asset={asset} className={className} />
     </RendererErrorBoundary>
   );

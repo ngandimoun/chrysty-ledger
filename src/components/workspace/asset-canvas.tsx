@@ -34,8 +34,8 @@ export function AssetCanvas({ asset, onClose, className }: AssetCanvasProps) {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
-        <RenderAsset asset={assetV2} className="h-full" />
+      <div className="flex min-h-0 min-w-0 flex-1 overflow-y-auto p-4">
+        <RenderAsset asset={assetV2} className="min-w-0 w-full" />
       </div>
     </div>
   );

@@ -38,6 +38,7 @@ type SeriesChartProps = {
   title?: string;
   compact?: boolean;
   className?: string;
+  width: number;
 };
 
 export function SeriesChart({
@@ -46,6 +47,7 @@ export function SeriesChart({
   title,
   compact = false,
   className,
+  width,
 }: SeriesChartProps) {
   const height = compact ? 180 : 280;
   const tick = chartTickStyle(compact ? 10 : 12);
@@ -71,10 +73,14 @@ export function SeriesChart({
     );
   }
 
+  if (width <= 0) {
+    return null;
+  }
+
   if (chartType === "line") {
     return (
-      <div className={cn("notranslate w-full", className)} translate="no">
-        <ResponsiveContainer width="100%" height={height}>
+      <div className={cn("notranslate w-full min-w-0", className)} translate="no">
+        <ResponsiveContainer width={width} height={height}>
           <LineChart data={data}>
             <XAxis dataKey="label" {...axisProps} />
             <YAxis {...axisProps} tickFormatter={(v) => formatValue(Number(v))} />
@@ -98,8 +104,8 @@ export function SeriesChart({
       chartType === "donut" ? chartDonutRadii(compact) : { innerRadius: 0, outerRadius: compact ? 70 : 100 };
 
     return (
-      <div className={cn("notranslate w-full", className)} translate="no">
-        <ResponsiveContainer width="100%" height={height}>
+      <div className={cn("notranslate w-full min-w-0", className)} translate="no">
+        <ResponsiveContainer width={width} height={height}>
           <PieChart>
             <Pie
               data={data}
@@ -124,8 +130,8 @@ export function SeriesChart({
   }
 
   return (
-    <div className={cn("notranslate w-full", className)} translate="no">
-      <ResponsiveContainer width="100%" height={height}>
+    <div className={cn("notranslate w-full min-w-0", className)} translate="no">
+      <ResponsiveContainer width={width} height={height}>
         <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 32 }}>
           <XAxis
             dataKey="label"

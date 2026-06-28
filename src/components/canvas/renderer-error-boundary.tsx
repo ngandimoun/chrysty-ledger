@@ -2,9 +2,12 @@
 
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
+import { Button } from "@/components/ui/button";
+
 type RendererErrorBoundaryProps = {
   children: ReactNode;
   title?: string;
+  resetKey?: string;
 };
 
 type RendererErrorBoundaryState = {
@@ -21,9 +24,19 @@ export class RendererErrorBoundary extends Component<
     return { hasError: true };
   }
 
+  componentDidUpdate(prevProps: RendererErrorBoundaryProps) {
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
+      this.setState({ hasError: false });
+    }
+  }
+
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("Asset renderer error:", error, info);
   }
+
+  handleRetry = () => {
+    this.setState({ hasError: false });
+  };
 
   render() {
     if (this.state.hasError) {
@@ -33,8 +46,11 @@ export class RendererErrorBoundary extends Component<
             {this.props.title ?? "This asset couldn't be displayed"}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            The data may be invalid or incomplete.
+            The chart could not render yet. Try again after the panel finishes loading.
           </p>
+          <Button variant="outline" size="sm" className="mt-4" onClick={this.handleRetry}>
+            Retry
+          </Button>
         </div>
       );
     }
