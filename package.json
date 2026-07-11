@@ -12,9 +12,11 @@
     "test:watch": "vitest",
     "test:smoke": "vitest run src/test/smoke",
     "trigger:dev": "npx trigger.dev@4.4.6 dev",
-    "trigger:deploy": "npx trigger.dev@4.4.6 deploy --env-file .env.local"
+    "trigger:deploy": "npx trigger.dev@4.4.6 deploy --env-file .env.local",
+    "postinstall": "npm run build --prefix packages/platform && npm run build --prefix packages/live-embed"
   },
   "dependencies": {
+    "@chrysty/live-embed": "file:packages/live-embed",
     "@chrysty/platform": "file:packages/platform",
     "@base-ui/react": "^1.6.0",
     "@mastra/core": "^1.45.0",

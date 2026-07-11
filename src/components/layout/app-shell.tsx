@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { AskChrystyButton, ChrystyHostContext } from "@chrysty/live-embed";
 import { PanelLeft } from "lucide-react";
 
 import { AuthGuard } from "@/components/auth/auth-guard";
@@ -75,41 +76,54 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <AuthGuard>
-      <div className="flex h-dvh overflow-hidden bg-background">
-      <Sidebar
-        isOpen={isSidebarOpen}
-        isMobile={isMobile}
-        workspaces={workspaces}
-        activeWorkspaceId={activeWorkspaceId}
-        onClose={() => setIsSidebarOpen(false)}
-        onNewWorkspace={() => setIsNewWorkspaceOpen(true)}
-        onSelectWorkspace={handleSelectWorkspace}
-      />
+      <ChrystyHostContext
+        source="ledger_workspace"
+        title="Ledger"
+        captureTarget="#workspace-content"
+        worker="ledger"
+        entityId={pathname}
+      >
+        <div className="flex h-dvh overflow-hidden bg-background">
+          <Sidebar
+            isOpen={isSidebarOpen}
+            isMobile={isMobile}
+            workspaces={workspaces}
+            activeWorkspaceId={activeWorkspaceId}
+            onClose={() => setIsSidebarOpen(false)}
+            onNewWorkspace={() => setIsNewWorkspaceOpen(true)}
+            onSelectWorkspace={handleSelectWorkspace}
+          />
 
-      <NewWorkspaceDialog
-        open={isNewWorkspaceOpen}
-        onOpenChange={setIsNewWorkspaceOpen}
-        onCreate={handleCreateWorkspace}
-      />
+          <NewWorkspaceDialog
+            open={isNewWorkspaceOpen}
+            onOpenChange={setIsNewWorkspaceOpen}
+            onCreate={handleCreateWorkspace}
+          />
 
-      <div className="relative flex min-w-0 flex-1 flex-col bg-background">
-        {!isSidebarOpen && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsSidebarOpen(true)}
-            aria-label="Open sidebar"
-            className="fixed top-[max(env(safe-area-inset-top),0.75rem)] left-3 z-30 shrink-0 text-muted-foreground hover:bg-muted hover:text-primary md:size-8"
-          >
-            <PanelLeft className="size-5 md:size-4" />
-          </Button>
-        )}
+          <div className="relative flex min-w-0 flex-1 flex-col bg-background">
+            {!isSidebarOpen && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsSidebarOpen(true)}
+                aria-label="Open sidebar"
+                className="fixed top-[max(env(safe-area-inset-top),0.75rem)] left-3 z-30 shrink-0 text-muted-foreground hover:bg-muted hover:text-primary md:size-8"
+              >
+                <PanelLeft className="size-5 md:size-4" />
+              </Button>
+            )}
 
-        <main className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-y-contain pt-[max(env(safe-area-inset-top),0px)] pb-[max(env(safe-area-inset-bottom),0px)]">
-          {children}
-        </main>
-      </div>
-    </div>
+            <main
+              id="workspace-content"
+              data-chrysty-capture
+              className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-y-contain pt-[max(env(safe-area-inset-top),0px)] pb-[max(env(safe-area-inset-bottom),0px)]"
+            >
+              {children}
+            </main>
+          </div>
+        </div>
+        <AskChrystyButton />
+      </ChrystyHostContext>
     </AuthGuard>
   );
 }

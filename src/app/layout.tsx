@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ChrystyLiveEmbedProvider } from "@chrysty/live-embed";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { Toaster } from "@/components/ui/sonner";
@@ -55,18 +56,26 @@ export default function RootLayout({
           storageKey="chrysty-theme"
           disableTransitionOnChange
         >
-          <QueryProvider>
-            <LedgerProvider>
-              <WorkspaceProvider>
-                <WorkspaceSidebarProvider>
-                  <ChatAssetRefsProvider>
-                    <AppShell>{children}</AppShell>
-                  </ChatAssetRefsProvider>
-                </WorkspaceSidebarProvider>
-              </WorkspaceProvider>
-            </LedgerProvider>
-          </QueryProvider>
-          <Toaster richColors position="top-center" />
+          <ChrystyLiveEmbedProvider
+            worker="ledger"
+            astraEmbedUrl={
+              process.env.NEXT_PUBLIC_ASTRA_EMBED_URL ??
+              "https://chrysty.chrysty.dev"
+            }
+          >
+            <QueryProvider>
+              <LedgerProvider>
+                <WorkspaceProvider>
+                  <WorkspaceSidebarProvider>
+                    <ChatAssetRefsProvider>
+                      <AppShell>{children}</AppShell>
+                    </ChatAssetRefsProvider>
+                  </WorkspaceSidebarProvider>
+                </WorkspaceProvider>
+              </LedgerProvider>
+            </QueryProvider>
+            <Toaster richColors position="top-center" />
+          </ChrystyLiveEmbedProvider>
         </ThemeProvider>
       </body>
     </html>
